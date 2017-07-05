@@ -1,6 +1,6 @@
 {
   "name": "tally-rx",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Observable stream of Sports Scores.",
   "main": "tally.js",
   "engines" : { "node" : ">=6.9.1" },
