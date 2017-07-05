@@ -54,3 +54,20 @@ $ npm install --save tally-scores
     });
   });
 ```
+
+### Errors
+
+If no events can be found for the given league, you will be presented with an error, and your streams will be unsubscribed. Using the `subscribe` method's `error` callback, you can handle such requests
+
+```javascript
+  const Tally = require("./tally");
+  let scores = new Tally({league: "nhl"}); //in July, there are no hockey games
+
+  scores.subscribe(events => {
+    events.map(event => {
+      console.log(`Home: ${event.home_team.full_name} - Away: ${event.away_team.full_name}`);
+    });
+  }, error => {
+    console.log(error); // will display "No scheduled events could be found"
+  });
+```

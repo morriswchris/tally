@@ -10,6 +10,7 @@ const events_uri = "/events?id.in=";
 class Tally {
 
   constructor({league, max_requests = null, requests_per_second = 0.1, utc_offset = new Date().getTimezoneOffset() * 60}){
+    this.error = false;
     this.league = league;
     this.max_requests = max_requests;
     this.requests = 0;
@@ -28,12 +29,11 @@ class Tally {
     this.events = new Rx.Subject();
 
     this.eventIds = this.scheduledEvents
-      .filter(this._containsEvents)
+      .takeWhile(this._containsEvents)
       .map(this._currentGroupIds);
 
-    if(this.max_requests) {
-      this.eventIds.single();
-    }
+    //get the events once the scheduled events are found
+    this._events();
 
     //get the scheduled events
     this._scheduledEvents();
@@ -57,6 +57,7 @@ class Tally {
 
   _requests() {
     return this.timer_ticks
+      .takeWhile(() => !this.error)
       .withLatestFrom(this.utc_offset, function(_, date) { return date; });
   }
 
@@ -69,7 +70,15 @@ class Tally {
       request(this._endpoint(this.league, "schedule", utc_offset), (error, response,
         body) => {
         if (error) {
-          this.scheduledEvents.throw(error);
+          this.error = true;
+          this.events.error(new Error(error));
+        }
+
+        let events = JSON.parse(body);
+
+        if(!events.current_group) {
+          this.error = true;
+          this.events.error("No scheduled events could be found");
         }
         else {
           this.requests += 1;
@@ -95,7 +104,7 @@ class Tally {
     this.eventIds.subscribe(event_ids => {
       request(this._endpoint(this.league, "event", event_ids), (error, response, body) => {
         if (error) {
-          this.events.throw(error);
+          this.events.error(error);
         }
         else {
           this.events.next(JSON.parse(body));
