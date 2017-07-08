@@ -6,7 +6,7 @@ Easily stream sport score results into your NodeJS application using observables
 ## Install
 
 ```shell
-$ npm install --save tally-scores
+$ npm install --save tally-rx
 ```
 
 ## Usage
